@@ -10,6 +10,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import numpy as np
+import torch
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env import DummyVecEnv
 from sb3_contrib import MaskablePPO
@@ -32,8 +33,18 @@ def make_env_fn(config: TrainingConfig):
     return _init
 
 
+def _select_device() -> str:
+    """Pick the best available device: MPS (Apple Silicon) > CUDA > CPU."""
+    if torch.backends.mps.is_available():
+        return "mps"
+    if torch.cuda.is_available():
+        return "cuda"
+    return "cpu"
+
+
 def main() -> None:
     config = TrainingConfig()
+    device = _select_device()
 
     os.makedirs("models", exist_ok=True)
     os.makedirs("logs", exist_ok=True)
@@ -61,16 +72,18 @@ def main() -> None:
         policy_kwargs=policy_kwargs,
         tensorboard_log="./logs",
         verbose=1,
+        device=device,
         **config.to_dict(),
     )
 
-    print("=" * 60)
-    print("  2048 RL — Step 2: PPO training")
-    print(f"  total_timesteps : {config.total_timesteps:,}")
-    print(f"  n_envs          : {config.n_envs}")
-    print(f"  render_freq     : every {config.render_freq} episodes")
-    print("  Press Ctrl+C to interrupt and save the model.")
-    print("=" * 60)
+    print()
+    print("2048 RL : PPO training")
+    print(f"    - device          : {device}")
+    print(f"    - total_timesteps : {config.total_timesteps:,}")
+    print(f"    - n_envs          : {config.n_envs}")
+    print(f"    - render_freq     : every {config.render_freq} episodes")
+    print("Press Ctrl+C to interrupt and save the model.")
+    print()
 
     # ------------------------------------------------------------------
     # Callbacks
