@@ -129,11 +129,13 @@ class RenderCallback(BaseCallback):
         self,
         config: TrainingConfig,
         model_save_path: str | None = None,
+        vec_env=None,
         verbose: int = 0,
     ) -> None:
         super().__init__(verbose)
         self._config = config
         self._model_save_path = model_save_path
+        self._vec_env = vec_env  # optional VecNormalize for checkpoint saves
         self._episode_count = 0
 
     def _on_step(self) -> bool:
@@ -145,6 +147,8 @@ class RenderCallback(BaseCallback):
                     self._run_render_episode(self._episode_count)
                     if self._model_save_path:
                         self.model.save(self._model_save_path)
+                        if self._vec_env is not None and hasattr(self._vec_env, "save"):
+                            self._vec_env.save(self._model_save_path + "_vecnormalize.pkl")
         return True
 
     def _run_render_episode(self, episode_num: int) -> None:

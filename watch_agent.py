@@ -18,7 +18,7 @@ from sb3_contrib import MaskablePPO
 
 from env.game2048_env import Game2048Env
 from rl.wrappers import ActionMaskWrapper, PreprocessingWrapper, RewardShapingWrapper
-from training.config import TrainingConfig
+from training.config import TrainingConfig, TrainingConfigV2, TrainingConfigV3
 
 # ---------------------------------------------------------------------------
 # Pygame layout / colours (mirror of the callback renderer)
@@ -105,12 +105,19 @@ def _make_env(config: TrainingConfig) -> ActionMaskWrapper:
     return env
 
 
-def watch(model_path: str, n_episodes: int, speed_ms: int) -> None:
+_CONFIG_MAP: dict[str, type] = {
+    "v1": TrainingConfig,
+    "v2": TrainingConfigV2,
+    "v3": TrainingConfigV3,
+}
+
+
+def watch(model_path: str, n_episodes: int, speed_ms: int, config_version: str = "v1") -> None:
     """Load a model and watch it play for *n_episodes*."""
     if not os.path.exists(model_path):
         sys.exit(f"Model file not found: {model_path}")
 
-    config = TrainingConfig()
+    config = _CONFIG_MAP[config_version]()
     model = MaskablePPO.load(model_path, device="cpu")
 
     pygame.init()
@@ -193,6 +200,12 @@ def main() -> None:
         default=5,
         help="Number of episodes to watch (default: 5).",
     )
+    parser.add_argument(
+        "--config",
+        choices=["v1", "v2", "v3"],
+        default="v1",
+        help="Config version used during training (default: v1).",
+    )
     args = parser.parse_args()
 
     # Normalise model path: SB3 accepts both with and without .zip
@@ -200,7 +213,7 @@ def main() -> None:
     if not model_path.endswith(".zip") and not os.path.exists(model_path):
         model_path = model_path + ".zip"
 
-    watch(model_path=model_path, n_episodes=args.episodes, speed_ms=args.speed)
+    watch(model_path=model_path, n_episodes=args.episodes, speed_ms=args.speed, config_version=args.config)
 
 
 if __name__ == "__main__":

@@ -56,12 +56,22 @@ def compute_reward(
     if not moved:
         return float(config.w_invalid)
 
-    r_merge = math.log2(score_gained) if score_gained > 0 else 0.0
+    if score_gained > 0:
+        log_merge = math.log2(score_gained)
+        if getattr(config, "use_superlinear_merge_reward", False):
+            r_merge = log_merge ** 2
+        else:
+            r_merge = log_merge
+    else:
+        r_merge = 0.0
+
     r_empty = float(np.sum(board == 0)) / 16.0
     r_mono = monotonicity_score(board)
+    r_survival = float(getattr(config, "w_survival", 0.0))
 
     return float(
         config.w_merge * r_merge
         + config.w_empty * r_empty
         + config.w_mono * r_mono
+        + r_survival
     )
