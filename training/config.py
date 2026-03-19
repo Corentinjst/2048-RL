@@ -57,7 +57,7 @@ class TrainingConfig:
     # ------------------------------------------------------------------
     # Training
     # ------------------------------------------------------------------
-    total_timesteps: int = 10_000_000
+    total_timesteps: int = 30_000_000
     n_envs: int = 8  # number of parallel environments
 
     def to_dict(self) -> dict:
