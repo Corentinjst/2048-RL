@@ -28,6 +28,15 @@ logs/
 models/
 *.zip
 
+# Exceptions - keep final model and training logs in repo
+!models/
+!logs/
+models/*
+logs/*
+!models/ppo_2048_v3_final.zip
+!models/ppo_2048_v3_final_vecnormalize.pkl
+!logs/run_V3_20260318_225437/
+
 # IDEs
 .idea/
 .vscode/
